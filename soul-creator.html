@@ -1,0 +1,136 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Soul Creator</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0c12;--panel:#151722;--panel2:#1d2030;--line:#2c3047;--fg:#eceef6;--dim:#8d92ab;--ac:#ffd84a;--acd:#1a1400;--bad:#ff5d6c;
+ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--fg);font:10px/1.8 'Press Start 2P',monospace;-webkit-font-smoothing:none}
+#app{max-width:440px;margin:0 auto;padding:18px 16px 24px}
+h1{font-size:15px;font-weight:normal;margin:6px 0 6px;letter-spacing:.5px}
+p{color:var(--dim);margin:0 0 6px}
+.hd{border-bottom:2px solid var(--line);padding-bottom:12px;margin-bottom:14px}
+
+.b{font:inherit;background:var(--panel2);color:var(--fg);border:2px solid var(--line);border-radius:4px;padding:11px 13px;cursor:pointer;margin:2px;transition:border-color .12s,color .12s,background .12s}
+.b:hover{border-color:var(--dim)}
+.b:active,.b.on{color:var(--ac);border-color:var(--ac)}
+.b:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.b.pri{background:var(--ac);color:var(--acd);border-color:var(--ac)}
+.b.pri:active{filter:brightness(.9);color:var(--acd)}
+.b.dng.on{color:var(--bad);border-color:var(--bad)}
+
+.g{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.cd{background:var(--panel);border:2px solid var(--line);border-radius:6px;padding:10px;text-align:center;cursor:pointer;transition:border-color .12s}
+.cd:hover{border-color:var(--ac)}
+.cd>div:not(.pl){margin:8px 0 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cd .b{width:100%;margin:6px 0 0;font-size:8px;padding:8px 4px;background:transparent;color:var(--dim)}
+.cd .b.on{color:var(--bad);border-color:var(--bad)}
+.pl{font-size:34px;color:var(--dim);display:flex;align-items:center;justify-content:center;min-height:170px;border-style:dashed}
+.pl:hover{color:var(--ac)}
+.sc{display:block;width:100%;image-rendering:pixelated;background:#050509;border-radius:3px}
+
+.stage{background:var(--panel);border:2px solid var(--line);border-radius:6px;padding:10px;margin:8px 0 14px}
+#ec{display:block;max-width:340px;margin:0 auto;border:2px solid var(--line);touch-action:none}
+.hint{text-align:center;font-size:8px;margin:10px 0 2px}
+
+.pn{background:var(--panel);border:2px solid var(--line);border-radius:6px;padding:12px;margin:10px 0}
+.pn>.r:first-child{margin-top:0}.pn>.r:last-child{margin-bottom:0}
+.r{display:flex;align-items:center;gap:10px;margin:10px 0;flex-wrap:wrap}
+.r span{width:76px;color:var(--dim)}
+.r input[type=range]{flex:1;min-width:90px;accent-color:var(--ac);height:24px}
+.r output{width:34px;text-align:right;color:var(--fg)}
+input[type=color]{width:52px;height:36px;border:2px solid var(--line);border-radius:4px;background:var(--panel2);padding:2px;cursor:pointer}
+input[type=text],select{font:inherit;width:100%;background:var(--panel);color:var(--fg);border:2px solid var(--line);border-radius:4px;padding:12px;box-sizing:border-box}
+input[type=text]{margin-bottom:12px}
+input[type=text]::placeholder{color:var(--dim)}
+select{width:auto;flex:1}
+
+details{margin:10px 0}
+summary.b{display:flex;justify-content:space-between;align-items:center;list-style:none;margin:0;padding:13px 14px}
+summary.b::after{content:'+';color:var(--dim)}
+details[open]>summary.b::after{content:'\2212';color:var(--ac)}
+summary::-webkit-details-marker{display:none}
+details[open]>summary{color:var(--ac);border-color:var(--ac)}
+details>.pn,details>.r{margin-top:8px}
+#chips{display:flex;flex-wrap:wrap;margin:6px -2px}
+
+.bar{position:sticky;bottom:0;display:flex;gap:8px;padding:12px 0 6px;margin-top:14px;background:linear-gradient(to top,var(--bg) 70%,transparent)}
+.bar .b{flex:1;margin:0;text-align:center}
+</style></head><body><div id="app"></div>
+<script>
+const A=document.getElementById('app'),g=i=>document.getElementById(i),PI=Math.PI,cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+const esc=s=>s.replace(/[&<>']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;'}[c]));
+/* the soul, one char per pixel (16x16) */
+const HR=['..XX........XX..','.XXXXX....XXXXX.',...Array(2).fill('XXXXXXX..XXXXXXX'),...Array(6).fill('X'.repeat(16)),...Array(2).fill('..'+'X'.repeat(12)+'..'),...Array(2).fill('....'+'X'.repeat(8)+'....'),...Array(2).fill('......XXXX......')];
+const MAXS=240; /* biggest a shape can be */
+let L=[],ed=null,sel=-1,drag=null,arm=0;
+try{L=JSON.parse(localStorage.getItem('souls')||'[]')}catch(e){}
+const put=()=>{try{localStorage.setItem('souls',JSON.stringify(L))}catch(e){}};
+
+function aura(x,s,t){const c=s.ac,k=s.au;
+ if(k=='glow'){const r=105+10*Math.sin(t*3),q=x.createRadialGradient(0,0,20,0,0,r);q.addColorStop(0,c+'cc');q.addColorStop(1,c+'00');x.fillStyle=q;x.fillRect(-128,-128,256,256)}
+ else if(k!='none'){x.fillStyle=c;for(let i=0;i<24;i++){const p=(t*.35+i/24)%1;let a,b;
+  if(k=='spark'){const n=i*2.4,r=45+p*75;a=Math.cos(n)*r;b=Math.sin(n)*r}
+  else if(k=='ember'){a=((i*53)%120)-60+Math.sin(t*2+i)*6;b=90-p*180}
+  else{const n=t*1.4+i*PI/12,r=60+(i%3)*20;a=Math.cos(n)*r;b=Math.sin(n)*r}
+  x.globalAlpha=k=='orbit'?.9:1-p;x.fillRect(a-2,b-2,5,5)}x.globalAlpha=1}}
+function draw(c,s,t){const x=c.getContext('2d'),N=c.width;x.setTransform(1,0,0,1,0,0);x.fillStyle='#050509';x.fillRect(0,0,N,N);x.setTransform(N/256,0,0,N/256,N/2,N/2);
+ aura(x,s,t);x.rotate(s.rot*PI/180);x.fillStyle=s.col;
+ const z0=s.sz||1;x.save();x.scale(z0,z0);
+ HR.forEach((r,j)=>{for(let i=0;i<16;i++)if(r[i]=='X')x.fillRect(i*10-80,j*10-80,10,10)});
+ x.restore();
+ s.sh.forEach(h=>{x.save();x.translate(h.x,h.y);x.rotate(h.r*PI/180);x.fillStyle=h.c;const z=h.s;
+  if(h.t=='sq')x.fillRect(-z/2,-z/2,z,z);else if(h.t=='ln')x.fillRect(-z,-2,z*2,4);
+  else if(h.t=='ci'){x.beginPath();x.arc(0,0,z/2,0,7);x.fill()}
+  else{x.beginPath();x.moveTo(0,-z/2);x.lineTo(z/2,z/2);x.lineTo(-z/2,z/2);x.fill()}x.restore()})}
+const tick=ms=>{document.querySelectorAll('canvas.sc').forEach(c=>c.s&&draw(c,c.s,ms/1000));requestAnimationFrame(tick)};requestAnimationFrame(tick);
+
+function lib(){ed=null;
+ A.innerHTML=`<div class="hd"><h1>Soul Library</h1><p>Tap + to forge a new soul.</p></div><div class="g">${L.map(s=>`<div class="cd" data-o="${s.id}"><canvas class="sc" width="128" height="128"></canvas><div>${esc(s.name)}</div><button class="b${arm==s.id?' on':''}" data-d="${s.id}">${arm==s.id?'Sure?':'Delete'}</button></div>`).join('')}<div class="cd pl" data-o="new">+</div></div>`;
+ A.querySelectorAll('.cd[data-o]').forEach((e,i)=>{const c=e.querySelector('canvas');if(c)c.s=L[i]})}
+
+function chips(){g('chips').innerHTML=ed.sh.map((h,i)=>`<button class="b${i==sel?' on':''}" data-s="${i}">${{sq:'■',ln:'▬',ci:'●',tr:'▲'}[h.t]}${i+1}</button>`).join('');
+ const h=ed.sh[sel];g('sp').hidden=!h;if(h){g('hc').value=h.c;g('hs').value=h.s;g('hr').value=h.r;g('hso').value=h.s}}
+
+function edit(id){const o=L.find(s=>s.id==id);ed=o?JSON.parse(JSON.stringify(o)):{id:0,name:'',col:'#ffffff',rot:0,sz:1,au:'none',ac:'#00ffff',sh:[]};if(!ed.sz)ed.sz=1;sel=-1;
+ A.innerHTML=`<div class="hd"><h1>${o?'Edit':'New'} Soul</h1></div>
+ <div class="stage"><canvas id="ec" class="sc" width="256" height="256"></canvas><p class="hint">Drag a shape to move it</p></div>
+ <input id="nm" type="text" maxlength="16" placeholder="Name your soul" value="${esc(ed.name)}">
+ <div class="pn">
+  <div class="r"><span>Color</span><input type="color" id="col"></div>
+  <div class="r"><span>Size</span><input type="range" id="sz" min="40" max="300"><output id="szo"></output></div>
+  <div class="r"><span>Rotate</span><input type="range" id="rot" min="0" max="359"><button class="b" id="r9">↻90</button></div>
+ </div>
+ <details><summary class="b">Shapes</summary>
+  <div class="pn">
+   <div class="r"><button class="b" data-a="sq">■</button><button class="b" data-a="ln">▬</button><button class="b" data-a="ci">●</button><button class="b" data-a="tr">▲</button></div>
+   <div id="chips"></div>
+   <div id="sp"><div class="r"><span>Color</span><input type="color" id="hc"></div><div class="r"><span>Size</span><input type="range" id="hs" min="6" max="${MAXS}"><output id="hso"></output></div><div class="r"><span>Turn</span><input type="range" id="hr" min="0" max="359"></div><button class="b dng" id="hd">Delete shape</button></div>
+  </div>
+ </details>
+ <details><summary class="b">Aura</summary><div class="pn"><div class="r"><span>Style</span><select id="au"><option value="none">None<option value="glow">Glow<option value="spark">Sparkles<option value="orbit">Orbit<option value="ember">Embers</select></div><div class="r"><span>Color</span><input type="color" id="ac"></div></div></details>
+ <div class="bar"><button class="b" id="cn">Back</button><button class="b pri" id="sv">Save</button></div>`;
+ const c=g('ec'),cur=()=>ed.sh[sel];c.s=ed;
+ g('col').value=ed.col;g('rot').value=ed.rot;g('au').value=ed.au;g('ac').value=ed.ac;
+ g('sz').value=Math.round(ed.sz*100);g('szo').textContent=Math.round(ed.sz*100)+'%';
+ g('nm').oninput=e=>ed.name=e.target.value;g('col').oninput=e=>ed.col=e.target.value;g('rot').oninput=e=>ed.rot=+e.target.value;
+ g('sz').oninput=e=>{ed.sz=+e.target.value/100;g('szo').textContent=e.target.value+'%'};
+ g('r9').onclick=()=>{ed.rot=(ed.rot+90)%360;g('rot').value=ed.rot};
+ g('au').onchange=e=>ed.au=e.target.value;g('ac').oninput=e=>ed.ac=e.target.value;
+ g('hc').oninput=e=>cur().c=e.target.value;g('hs').oninput=e=>{cur().s=+e.target.value;g('hso').textContent=e.target.value};g('hr').oninput=e=>cur().r=+e.target.value;
+ g('hd').onclick=()=>{ed.sh.splice(sel,1);sel=-1;chips()};
+ const loc=e=>{const r=c.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*256-128,py=(e.clientY-r.top)/r.height*256-128,a=-ed.rot*PI/180;return[px*Math.cos(a)-py*Math.sin(a),px*Math.sin(a)+py*Math.cos(a)]};
+ c.onpointerdown=e=>{const[x,y]=loc(e);let b=-1,bd=1e9;ed.sh.forEach((h,i)=>{const d=Math.hypot(h.x-x,h.y-y);if(d<(h.t=='ln'?h.s:h.s/2)+14&&d<=bd){b=i;bd=d}});if(b>=0){sel=b;chips();drag=[b,ed.sh[b].x-x,ed.sh[b].y-y];c.setPointerCapture(e.pointerId)}};
+ c.onpointermove=e=>{if(!drag)return;const[x,y]=loc(e),h=ed.sh[drag[0]];h.x=cl(x+drag[1],-128,128);h.y=cl(y+drag[2],-128,128)};
+ c.onpointerup=c.onpointercancel=()=>drag=null;
+ g('sv').onclick=()=>{if(!ed.name.trim())ed.name='Soul '+(L.length+1);if(ed.id)L=L.map(s=>s.id==ed.id?ed:s);else{ed.id=Date.now();L.push(ed)}put();lib()};
+ g('cn').onclick=lib;chips()}
+
+A.onclick=e=>{const T=e.target;
+ const d=T.closest('[data-d]');if(d){const id=+d.dataset.d;if(arm==id){L=L.filter(s=>s.id!=id);arm=0;put()}else{arm=id;setTimeout(()=>{if(arm==id){arm=0;if(!ed)lib()}},2500)}lib();return}
+ const a=T.closest('[data-a]');if(a&&ed){ed.sh.push({t:a.dataset.a,x:0,y:0,s:30,r:0,c:'#ff0000'});sel=ed.sh.length-1;chips();return}
+ const s=T.closest('[data-s]');if(s&&ed){sel=+s.dataset.s;chips();return}
+ const o=T.closest('[data-o]');if(o&&!ed)edit(o.dataset.o=='new'?null:+o.dataset.o)};
+lib();
+</script></body></html>
