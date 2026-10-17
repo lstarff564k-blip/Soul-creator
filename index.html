@@ -3,11 +3,13 @@
 <title>Soul Creator</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0b0c12;--panel:#151722;--panel2:#1d2030;--line:#2c3047;--fg:#eceef6;--dim:#8d92ab;--ac:#ffd84a;--acd:#1a1400;--bad:#ff5d6c;
+:root{--bg:#0b0c12;--panel:#151722;--panel2:#1d2030;--line:#2c3047;--fg:#eceef6;--dim:#8d92ab;--ac:#ffd84a;--acd:#1a1400;--bad:#ff5d6c;--dw:clamp(190px,52vw,340px);
  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{scroll-padding-top:env(safe-area-inset-top,0px);color-scheme:dark}
+[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--fg);font:10px/1.8 'Press Start 2P',monospace;-webkit-font-smoothing:none}
 #app{max-width:440px;margin:0 auto;padding:18px 16px 24px}
+#app.ed{max-width:none;padding:0}
 h1{font-size:15px;font-weight:normal;margin:6px 0 6px;letter-spacing:.5px}
 p{color:var(--dim);margin:0 0 6px}
 .hd{border-bottom:2px solid var(--line);padding-bottom:12px;margin-bottom:14px}
@@ -18,8 +20,10 @@ p{color:var(--dim);margin:0 0 6px}
 .b:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 .b.pri{background:var(--ac);color:var(--acd);border-color:var(--ac)}
 .b.pri:active{filter:brightness(.9);color:var(--acd)}
-.b.dng.on{color:var(--bad);border-color:var(--bad)}
+.b.dng.on,.b.dng:active{color:var(--bad);border-color:var(--bad)}
+svg.i{width:12px;height:12px;fill:currentColor;flex:none;display:block}
 
+/* library */
 .g{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
 .cd{background:var(--panel);border:2px solid var(--line);border-radius:6px;padding:10px;text-align:center;cursor:pointer;transition:border-color .12s}
 .cd:hover{border-color:var(--ac)}
@@ -30,43 +34,94 @@ p{color:var(--dim);margin:0 0 6px}
 .pl:hover{color:var(--ac)}
 .sc{display:block;width:100%;image-rendering:pixelated;background:#050509;border-radius:3px}
 
-.stage{background:var(--panel);border:2px solid var(--line);border-radius:6px;padding:10px;margin:8px 0 14px}
-#ec{display:block;max-width:340px;margin:0 auto;border:2px solid var(--line);touch-action:none}
-.hint{text-align:center;font-size:8px;margin:10px 0 2px}
-
-.pn{background:var(--panel);border:2px solid var(--line);border-radius:6px;padding:12px;margin:10px 0}
-.pn>.r:first-child{margin-top:0}.pn>.r:last-child{margin-bottom:0}
-.r{display:flex;align-items:center;gap:10px;margin:10px 0;flex-wrap:wrap}
-.r span{width:76px;color:var(--dim)}
-.r input[type=range]{flex:1;min-width:90px;accent-color:var(--ac);height:24px}
-.r output{width:34px;text-align:right;color:var(--fg)}
-input[type=color]{width:52px;height:36px;border:2px solid var(--line);border-radius:4px;background:var(--panel2);padding:2px;cursor:pointer}
-input[type=text],select{font:inherit;width:100%;background:var(--panel);color:var(--fg);border:2px solid var(--line);border-radius:4px;padding:12px;box-sizing:border-box}
-input[type=text]{margin-bottom:12px}
+/* editor layout */
+.mn{padding:14px 16px 20px;transition:padding .25s}
+.ed.open .mn{padding-left:12px;padding-right:calc(var(--dw) + 12px)}
+.mi{max-width:540px;margin:0 auto}
+.stage{background:var(--panel);border:2px solid var(--line);border-radius:6px;padding:10px}
+#ec{display:block;width:100%;max-width:min(540px,calc(100vh - 260px));max-width:min(540px,calc(100dvh - 260px));margin:0 auto;border:2px solid var(--line);touch-action:none}
+input[type=text]{font:inherit;width:100%;background:var(--panel);color:var(--fg);border:2px solid var(--line);border-radius:4px;padding:12px;box-sizing:border-box;margin-bottom:12px}
 input[type=text]::placeholder{color:var(--dim)}
-select{width:auto;flex:1}
-
-details{margin:10px 0}
-summary.b{display:flex;justify-content:space-between;align-items:center;list-style:none;margin:0;padding:13px 14px}
-summary.b::after{content:'+';color:var(--dim)}
-details[open]>summary.b::after{content:'\2212';color:var(--ac)}
-summary::-webkit-details-marker{display:none}
-details[open]>summary{color:var(--ac);border-color:var(--ac)}
-details>.pn,details>.r{margin-top:8px}
-#chips{display:flex;flex-wrap:wrap;margin:6px -2px}
-
-.bar{position:sticky;bottom:0;display:flex;gap:8px;padding:12px 0 6px;margin-top:14px;background:linear-gradient(to top,var(--bg) 70%,transparent)}
+.bar{display:flex;gap:8px;margin-top:12px}
 .bar .b{flex:1;margin:0;text-align:center}
+
+/* side editor */
+.tgb{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);right:12px;width:42px;height:42px;z-index:6;padding:0;margin:0;display:flex;align-items:center;justify-content:center;font-size:20px;line-height:1;background:var(--ac);color:var(--acd);border:2px solid var(--ac);border-radius:6px;transition:right .25s}
+.tgb span{display:block;transition:transform .25s}
+.ed.open .tgb{right:calc(var(--dw) + 12px)}
+.ed.open .tgb span{transform:rotate(45deg)}
+.dr{position:fixed;top:0;right:0;bottom:0;width:var(--dw);box-sizing:border-box;background:var(--panel);border-left:2px solid var(--line);z-index:5;overflow-y:auto;overscroll-behavior:contain;font-size:8px;
+ padding:calc(env(safe-area-inset-top,0px) + 14px) 10px calc(env(safe-area-inset-bottom,0px) + 18px);
+ transform:translateX(100%);visibility:hidden;transition:transform .25s,visibility 0s .25s}
+.ed.open .dr{transform:none;visibility:visible;transition:transform .25s}
+.dr .b{padding:9px 8px;font-size:8px}
+.dr .pn{background:var(--bg);border:2px solid var(--line);border-radius:6px;padding:10px;margin:8px 0}
+.dr details{margin:8px 0}
+.dr summary.b{display:flex;justify-content:space-between;align-items:center;list-style:none;margin:0;padding:11px 10px}
+.dr summary.b::after{content:'+';color:var(--dim)}
+.dr details[open]>summary.b::after{content:'\2212';color:var(--ac)}
+.dr summary::-webkit-details-marker{display:none}
+.dr details[open]>summary{color:var(--ac);border-color:var(--ac)}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tools .b{display:flex;align-items:center;gap:6px;margin:0}
+.f{margin:10px 0}.f:first-child{margin-top:0}.f>span{display:block;color:var(--dim);margin-bottom:5px}
+.rg{display:flex;align-items:center;gap:6px}
+.rg input[type=range]{flex:1;min-width:0;accent-color:var(--ac);height:24px;margin:0}
+.rg output{min-width:28px;text-align:right}
+.rg .b{margin:0;flex:none}
+input[type=color]{width:100%;height:34px;border:2px solid var(--line);border-radius:4px;background:var(--panel2);padding:2px;cursor:pointer;box-sizing:border-box}
+select{font:inherit;font-size:8px;width:100%;background:var(--panel2);color:var(--fg);border:2px solid var(--line);border-radius:4px;padding:10px 6px;box-sizing:border-box}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:6px}.two .b{margin:0}
+.shg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.shg .b{margin:0;padding:8px 0;display:flex;justify-content:center}
+.wide{width:100%;margin:8px 0 2px!important}
+.lb{color:var(--dim);margin:10px 0 4px}
+.thg{display:grid;gap:6px}.thg.w{grid-template-columns:repeat(3,1fr)}.thg.k{grid-template-columns:repeat(4,1fr)}
+.th{margin:0!important;padding:4px!important;height:46px;display:flex;align-items:center;justify-content:center}
+.th img,.ch img{image-rendering:pixelated;max-width:100%;max-height:100%}
+#chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.ch{margin:0!important;padding:5px 6px!important;display:flex;align-items:center;gap:4px;height:34px;box-sizing:border-box}
+.ch img{height:20px;width:auto}.ch svg.i{width:14px;height:14px}.ch i{font-style:normal}
 </style></head><body><div id="app"></div>
 <script>
+const WINGS=[{"p":["#8981ad","#9d5d86","#554f51","#524f50","#8d4883","#80347f","#4a245c","#3b3663","#3c214d","#262b37","#262834","#282438"],"r":["....aaa9999999aa9a..............","..992002b700000078baa...........",".a70002b8877777700078aaa99a.....","a300023999b888888868782000099...","a0002a9b66555556668aaa82000029..","9003aa98111115556668889a800002a.","a07bba9a5111115688867788a920000a","a39111b9811158b87777aa99baa7200a","aa651119a518b807999aaa96aaaa99aa","...6511aa8b8079b6668b97baa9868a.","....611aa8079b65555697a88a676a..","....615a809b6511155b7a66b9778a..","....65880a65111111587b56a706a...","....6680aaaaa8511180a5169078a...","....687bbbb9a98515b7b11b606a....","....87a555568a98160a5159078a....","...b7b11111558aa587a11b606a.....","...866611111558a60a615b078899...",".......66111156ab0a51b70677769b.",".........611115a97a5586770000769","..........6111590aaaaaaaab87000a","...........6115a099bbb9999ab887a","............61597b51115568b9aaaa","...........2619095111111155689aa",".............69091111111111558..",".............6a0a111111111148...","..............a7a66666651116....","..............aa8.....266516....",".........................666...."]},{"p":["#eddab1","#d7bd8b","#b08d73","#605351","#554f51","#554f4f","#63453f","#363635","#2b2b2b","#232322","#1f2020","#141415","#0c0c0b","#0a0808"],"r":["05.7............................","7715............................",".726............................","..93............................","3dc.............................","c2d.............................","c10c................3...........","c200d..........3...3.dcccd......","ca100c........43db..d10001c.....","c9a110dd......5c2ccd100012d.....",".d9a1110ccccccbd10000001222c....",".cba82100000012b11001222221c....","d77ca98221111126a1122221012b....","d7779aa99999aaaab911111112b.....","c977779999999a99b2986666dc......",".c97777777779977b21100002b......","..cda977777aa9977c100122b.......","3.cccd99aaaa999997b1112b........",".d7777999997779777a66dc.........",".c9777777777aa9979a301b.....3...",".5cc9777779aa99999b01c...3...ddc","...5ccda999a997aaa306c....dcd10c","...3.cccca97779a9a062dccdca2601c","....c9777777aadaaa6210226016001c","...5ca9777aacd9a862002260216002c",".....ccccccd997996111111216112b.",".......3.d97777ab21111111612db..","........c977779a9aaaaaaaababb...","........d7accc99799aaa9a97bb....",".......5ccb4.d777a9a99797ab.....","............d77a99799797ab......","............d7ccd7797accb.......","...........5cb..d7accb..........","................ccc............."]},{"p":["#c3d0ac","#b59b8b","#8e6c6d","#695857","#4571b7","#574f4d","#554f51","#554f4f","#544f53","#544366","#191529","#020002","#000004","#000000"],"r":[".c813...............................","8a907...............................","502b.db5........cddddc..............",".3571d4bd......d100012dddddddd......","......d40bbc..d000000012c94004b5....","......8d4449dd1012ddd2111c44444b....","........d9449b012b999cb211c9444b....","....dd...dd9b102d999999b211cd99c....","....d1dc...dc0156bdcdd99d2101bdddc..","....d001dddd0126211225ddcd2100001d..",".....d1000001252111111255bc221111d..","......dd211126dcccc2110012656222d...","........dddddd..d99db2210126555b....","...............d94499bc2101255c.....","......cccb...bb4449999cd200155d.....",".....d0004ddb4444999999c50012d......","....d04444444449c944999d5001d.......","....c4cddc44449c9499999d2002d.......","....dd....ddddc94999999b001d........","..............b4999999d2012c........",".............d44999949c102d.........","..........ddb44999949d2012d.........",".....dddcd44449999449b1121d.........",".....d40044449444449d21251d.........","......ddd9444444ddc9d125210c........",".........dd944db...c65552100d.......","...........d09d....d211562100ccdb...","...........d0d....d10015622101404b..","...........d4d...d2bdd2255221094449d","...........db....dd...ccd5522112492c",".........................ddd2221000d","............................cc22111c","..............................b222d.","...............................bcc.."]},{"p":["#6a6e51","#605e4d","#594f50","#534f4e","#684846","#49433c","#73222d","#370f21","#282a21","#191b14","#1b1812","#2f081a"],"r":["005..............................","41a..............................","3b72.............................","155..............................","...399999999999999999999aa9985...","..3a50000000000000000000015589.3.","..95111111111111111111111115597b.","..89a9aaaa99aaa9aaaa999888888967.","..3b66b7666b7666b7666b9810015967.","...3bbb777bbbbbbbbb7bb9800015967.",".......3951000000115899851155967.",".......9511111111111589588888767.","......38aaaaaaa9aaaaaa915589.767.",".......3b66b7666b7666b9115a8.767.","........3bbbbbbbbbbb7b91159..767.",".....................950588..767.","....................591059...767.","...................5980159..b667.","..............57bbb9888888..76b..","..............76666951089..b667..",".............b66b7b91018957667...","............5b67.59800589b667....","..........577b67bb9501587667.....","..........766b6b6b810559667......","..........766b6bb999998b67.......","..........76b76b9555599a7........","..........b6b.bb51001599.........","..........b675981011018999aaaaa99",".........3766b9815555189851111119","..........37669815555189515888889","...........3bb9851551589558511159","..............398555589998511158.","................999999999999999.."]},{"p":["#c3bfcd","#75e5f1","#817d8b","#5d6699","#575253","#544b88","#44414c","#444249","#4a3e5a","#282431"],"r":["........66666666...............",".....66620000224666666667......","...66200000000002462000026.....","..6200249999997422264200006....",".51249995311135964246422226....","51389531111111135764253113377..","538...531377776776662253115526.","55.....66644200002664025554206.",".....6620022444200266400000026.","....62002499999995045642000266.","...62004995311135992637777776..","...60059531111111359451135429..","..62029531138883113567554229...","..7006531355...553136642249....","..70063338.......533666999.....","..7206538.........85669........","..7424738.........8766.........","...644758.........6646.........","....64478.........6426.........",".....6447........97206.........","......6246.......972006........","......7426.......9642006.......",".......6226......69642006......","..55...7026......6795442266666.",".518...7049.......7245313820046","518....6049.......9420231185006","538...62049.......9642002438426","55266640249........964420046646","5522000249..........99644222469",".94222249.............99999999.","..999999......................."]},{"p":["#f0877d","#ed7173","#6a8196","#636a7c","#514f63","#c02553","#b22452","#842854","#3b3752","#343147"],"r":["................888888888888....","..............8822222344432388..",".............832222334443222238.","..888.......83222334899984432238",".8438.......82223489984443344348","8428........82234847488444484438","8328.......842348477748434857428","8228.......832384777749423485428","83238.....8433487777749432248828","84323888884334847557749843223838","78432233333348475557444984333838","77843333334884765557477999844848","75788888888477555554777789984948",".7511577777551115577555748898989","..751111111111111575555578889889","..71577751111111157555557484989.","...77...7511111155555557748399..",".........75111115755557748439...",".........75111155158877488349...","........761011551158348888889...",".....5571001555111684222223448..","....510000155110155783222222348.","...5100011511001155778433444338.","..510011151100015575579999984248","..577515110000115755777777498324",".....771100011155557......749434",".....75100011555577.........9848","....76100015557777...........999","..77510015777777................","..71000157......................","...711157.......................","....77777......................."]},{"p":["#fdfefe","#febdb7","#dcadc2","#b76b8b","#554f52","#ac418e","#653880","#641656","#4a3b5d","#183f80","#191434"],"r":["........................a....",".......................aa....",".77..................778a....","a13777...........7777318a....",".81113777777777773111106a....",".78110011110011111111006a....","..7810011111001101101106a....","..7381110001111111001116a....","...738111001110011001116a....","...713831111110001011136a....","...471185110011001111136a....","....73138610011111111336a....",".....7111861110011133356a....",".....70011863110033335568a...",".....700011a6533333355768a...",".....7100113a663335557766a...",".....71111115a66555777766a...",".....711001135a6677777766a...",".....7110011357a687777766a...",".....71111113557a68777788a...",".....701110135577a68a78999...",".....7111113355777a68aa0009..","....73100113557777788820009..","....7110013355777aaa999022aa.","....711113355766666920092868a","...73111335666666889022986668","...7135566668aaaaaa9022988668","..7556668aaaa......99999aa888","..a668aaa.........922929..aaa",".aaaaa............929.929....",".................9029.929....",".................999...99...."]},{"p":["#b8a5ae","#ef35f7","#ee33f6","#f231f7","#932bca","#391f9e","#0a162c"],"r":["66666666666.....................","6432332314566666................",".665555552222145666.............","...6644455555423225666..........",".....62314445555542225666.......","......622222214455554334566.....","......62222223340545555444566...",".......62323233405214455544456..",".......600032140522321445554456.",".......6555004005322221445555456",".......6314500054444455554455546","......62223450542222232345555556","......62223340532222214554455556",".....623214440422223255145544456",".....621442140042221423254256666","....634422221404421433354346....","...614222222140000423254146.....","..614322222340550022254346......",".644322222340052502225146.......",".66666222314053450445436........","......662140053440005146........","........634053431455436.........",".........60521432225316.........",".........604142222253166........","..........6214222225436566......","..........631422222552544666....","..........6142222216545422346666","...........643333334656432232346","...........646666664566543214556","...........66......6645665422236",".....................66556654146",".......................666666666"]},{"p":["#fdf880","#fbe17d","#eec238","#b18337","#57514e","#564f52","#584f4b","#543b34","#1d160e","#18110b","#16110d","#14110f","#170f0d"],"r":["..5.................................",".9634......aaaaaaaaaa...........aa..","56316....9b2000222223bb......acc39..","6018...a920000000222223ba..aa4317b..",".6765.c2000baaaaaa8732202ba74377a...",".....9200bb........bb7320225470b....",".....c00a............a972022222a....","....9209.....aaaaaaabacb32002333a...","....c20b...9b22222222237b3031111c...","....90b..a91000002222222372311331a..","....92b.92000baaaac87322023313011ca.","....9329200a9.......98732023111111a.",".....87200a.......aa9997320311001b..","......b209.....a99322222332031113b..",".....9202b...9a200222222233212131b..",".....9209...921022377b9998732233c0a.",".....a00a..c2002aaba9877337732220b..",".....920a.9200ca...a87322223777799..","......9299200b....b7322233b932770b..","......932b009....93222379877a3209...",".......87202a...92022b9a877aaaaa....","........a209...c20229..87cbab...aa..","........a20a...c002b...a947aaac977cc","........a20a..92029...a4377a777c477c","........c20c..b00a...a7a77a433b74449",".........a0c.c202b..a34aaaa77a433339",".........c229c20a..93477933aab77777c","..........932720a..9aaa733133aa7787c","...........a9720a......aaaa9133987a.",".............a20a...aa......abba7a..","..............922bcc2b..........aa..","...............920229...............","................aaaa................"]}];
+const ICONS=[["..##...##..",".#..#.#..#.","#....#....#","#.........#","#.........#",".#.......#.","..#.....#..","...#...#...","....#.#....",".....#....."],[".#.......",".########",".#.....#.",".#....#..",".#.....#.",".########",".#.......",".#.......",".#.......",".#......."],["....#.##...","...#.#..#..","..########.",".#...#....#",".#...#....#","..########.","..#..#...#.","..#..#...#.","..#..#...#.","...######.."],["....#.....","...###....","..#####...","....#.....","....#.....","....#.....","#...#...#.","#.......#.",".#######..",".........."],[".......","#.....#",".#...#.","..#.#..","...#...","..#.#..",".#...#.","#.....#"],[".#........#","..#.####.#.","...#....#..","..#......#.",".#..#..#..#",".#..#..#..#",".#........#",".##########","..........."],["..########.",".#........#",".#........#",".#..#..#..#",".#.###....#",".#..#...#.#",".#........#","..########.","..........."],["..####....",".#..#.....","#..#......","#..#......","#..#.....#","#...#...##","#....###.#",".#.......#","..#.....#.","...#####..",".........."],["...........","..######...",".#......#..","#....#...#.","#....#...#.","#....#...#.","#.....#..#.","#......#.#.","#........#.",".#......#..","..######..."],[".........","..######.",".#......#",".#......#",".#......#",".#......#",".#......#",".#......#",".#..##..#",".#.#..#.#",".##....##"],["...........",".......#...",".......##..","..########.",".#.....##..",".#.....#..#","....#.....#","...##.....#","..########.","...##......","....#......"],["............",".#########..","#.........#.","#...#..#..#.","#...#..#..#.","#.........#.","#.........#.",".##.....##..","..#.#.#.#...","..#.#.#.#...","...#.#.#...."],["..####.....",".#....#....","#......#...","#......#...","#......#...","#......#...",".#....#....","..####.#...","........#..",".........#."],[".....####.","....#....#","....#....#","....#....#","..###..###",".#..#.#..#",".#..#.#..#","..##...##."],["...###....","..#...#...","..#...#...",".#######..","#.......#.","#.......#.","#.......#.","#.......#.","#.......#.",".#######.."],["...###....","..#...#...","##########",".#......#.",".#......#.",".#......#.",".#......#.",".#......#.",".#......#.","..######.."],["....##.....","...#..#....",".########..","#........#.","#........#.","#........#.","#........#.","#........#.","#........#.",".########..","..........."],["...#......","...#......","..#.#.....",".#..#.#...","#....#.#..","#.......#.","#...#...#.","#..###..#.",".#.###.#..","..#####...",".........."],["......#.....","..#...#.#...",".#...#...#..","#....#....#.",".#..#....#..","..#.#...#...","............"],["..........","..######..","###....###","#.#....#.#","#.#....#.#",".##....##.","..#....#..","...####...","....#.....","...###...."],["....#....","....#....","....#....","....#....","..#####..","...###...","#...#...#","#.......#",".#######.","........."],[".........","........#",".......#.","......#..",".#...#...","..#.#....","...#....."],["...........","..######...",".#......#..",".#..######.",".#.#......#",".#.#......#",".#.#......#",".#.#......#","..##......#","...#......#","....######."],[".....#....","....##....","...#.#....","..#..#....",".#...#####","#........#","#####...#.","....#..#..","....#.#...","....##....","....#.....",".........."]];
 const A=document.getElementById('app'),g=i=>document.getElementById(i),PI=Math.PI,cl=(v,a,b)=>Math.max(a,Math.min(b,v));
 const esc=s=>s.replace(/[&<>']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;'}[c]));
-/* the soul, one char per pixel (16x16) */
+/* the soul, one char per pixel (16x16) - built as ONE path so rotating never shows seams */
 const HR=['..XX........XX..','.XXXXX....XXXXX.',...Array(2).fill('XXXXXXX..XXXXXXX'),...Array(6).fill('X'.repeat(16)),...Array(2).fill('..'+'X'.repeat(12)+'..'),...Array(2).fill('....'+'X'.repeat(8)+'....'),...Array(2).fill('......XXXX......')];
-const MAXS=240; /* biggest a shape can be */
-let L=[],ed=null,sel=-1,drag=null,arm=0;
+const HP=new Path2D();HR.forEach((r,j)=>{for(let i=0;i<16;i++)if(r[i]=='X')HP.rect(i*10-80,j*10-80,10,10)});
+const CS=5,GMIN=-26,GMAX=25; /* draw-layer cell size and range */
+let L=[],ed=null,sel=-1,drag=null,paint=null,arm=0,tool='move',dz=2,dcol='#ffffff',dopen=false,moreOn=false,hist=[];
 try{L=JSON.parse(localStorage.getItem('souls')||'[]')}catch(e){}
 const put=()=>{try{localStorage.setItem('souls',JSON.stringify(L))}catch(e){}};
+
+/* icons for buttons */
+const SV=b=>`<svg class="i" viewBox="0 0 16 16" aria-hidden="true">${b}</svg>`;
+const I={sq:SV('<rect x="3" y="3" width="10" height="10"/>'),ln:SV('<rect x="1" y="7" width="14" height="2"/>'),ci:SV('<circle cx="8" cy="8" r="5.5"/>'),tr:SV('<path d="M8 2l6 11H2z"/>'),
+ di:SV('<path d="M8 1l6 7-6 7-6-7z"/>'),st:SV('<path d="M8 1l2 5h5l-4 3.5 1.5 5.5L8 11.8 3.5 15 5 9.5 1 6h5z"/>'),
+ ri:SV('<circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="2.5"/>'),cr:SV('<path d="M6 1h4v5h5v4h-5v5H6v-5H1V6h5z"/>'),
+ ar:SV('<path d="M8 1l6 7h-4v7H6V8H2z"/>'),hx:SV('<path d="M4.5 2h7L15 8l-3.5 6h-7L1 8z"/>'),
+ move:SV('<path d="M8 0l3 3H9v3h3V4l3 4-3 4V10H9v3h2l-3 3-3-3h2V10H4v2L1 8l3-4v2h3V3H5z"/>'),
+ draw:SV('<path d="M11 1l4 4-8 8H3V9z"/>'),
+ fill:SV('<path d="M7 1l7 7-5.5 5.5L1.5 6.5z"/><path d="M14 10c1.2 1.6 1.7 2.6 1.7 3.2a1.7 1.7 0 01-3.4 0c0-.6.5-1.6 1.7-3.2z"/>'),
+ erase:SV('<path d="M9 2l5.5 5.5L10 12H6L1.5 7.5z"/><rect x="5" y="13" width="10" height="2"/>')};
+const BASIC=['sq','ln','ci','tr','di','st','ri','cr','ar','hx'];
+
+/* pixel-art sprites (wings keep their own colours, icons take the shape colour) */
+const SPC={};
+function spr(k,col){const n=+k.slice(1),wing=k[0]=='w',key=wing?k:k+col;if(SPC[key])return SPC[key];
+ if(Object.keys(SPC).length>300)for(const q in SPC)delete SPC[q];
+ const rows=wing?WINGS[n].r:ICONS[n],pal=wing?WINGS[n].p:null,h=rows.length,w=rows[0].length,cv=document.createElement('canvas');cv.width=w;cv.height=h;const c=cv.getContext('2d');
+ for(let j=0;j<h;j++)for(let i=0;i<w;i++){const ch=rows[j][i];if(ch=='.')continue;c.fillStyle=wing?pal[parseInt(ch,16)]:col;c.fillRect(i,j,1,1)}
+ return SPC[key]=cv}
+const TH={},thumb=k=>TH[k]||(TH[k]=spr(k,'#eceef6').toDataURL());
+
+/* draw layer: one Path2D per colour, rebuilt only when it changes */
+const PC=new WeakMap();
+function pxPaths(s){const v=s.pv|0;let e=PC.get(s);if(e&&e.v===v)return e.m;
+ const m=new Map();for(const k in s.px){const[a,b]=k.split(',').map(Number),c=s.px[k];let p=m.get(c);if(!p)m.set(c,p=new Path2D());p.rect(a*CS-.15,b*CS-.15,CS+.3,CS+.3)}
+ PC.set(s,{v,m});return m}
 
 function aura(x,s,t){const c=s.ac,k=s.au;
  if(k=='glow'){const r=105+10*Math.sin(t*3),q=x.createRadialGradient(0,0,20,0,0,r);q.addColorStop(0,c+'cc');q.addColorStop(1,c+'00');x.fillStyle=q;x.fillRect(-128,-128,256,256)}
@@ -75,62 +130,123 @@ function aura(x,s,t){const c=s.ac,k=s.au;
   else if(k=='ember'){a=((i*53)%120)-60+Math.sin(t*2+i)*6;b=90-p*180}
   else{const n=t*1.4+i*PI/12,r=60+(i%3)*20;a=Math.cos(n)*r;b=Math.sin(n)*r}
   x.globalAlpha=k=='orbit'?.9:1-p;x.fillRect(a-2,b-2,5,5)}x.globalAlpha=1}}
+function shape(x,h){const z=h.s,t=h.t;
+ if(t=='sp'){const cv=spr(h.k,h.c),m=Math.max(cv.width,cv.height),sc=z/m;x.imageSmoothingEnabled=false;x.drawImage(cv,-cv.width*sc/2,-cv.height*sc/2,cv.width*sc,cv.height*sc);return}
+ x.fillStyle=h.c;x.beginPath();
+ if(t=='sq'){x.fillRect(-z/2,-z/2,z,z);return}
+ if(t=='ln'){x.fillRect(-z,-2,z*2,4);return}
+ if(t=='ci')x.arc(0,0,z/2,0,7);
+ else if(t=='tr'){x.moveTo(0,-z/2);x.lineTo(z/2,z/2);x.lineTo(-z/2,z/2)}
+ else if(t=='di'){x.moveTo(0,-z/2);x.lineTo(z/2,0);x.lineTo(0,z/2);x.lineTo(-z/2,0)}
+ else if(t=='st'){for(let i=0;i<10;i++){const r=i%2?z/4.2:z/2,a=-PI/2+i*PI/5;i?x.lineTo(Math.cos(a)*r,Math.sin(a)*r):x.moveTo(Math.cos(a)*r,Math.sin(a)*r)}}
+ else if(t=='ri'){const r2=z/2-Math.max(3,z/5);x.arc(0,0,z/2,0,PI*2);x.moveTo(r2,0);x.arc(0,0,r2,0,PI*2);x.fill('evenodd');return}
+ else if(t=='cr'){const w=z/3;x.rect(-z/2,-w/2,z,w);x.rect(-w/2,-z/2,w,z)}
+ else if(t=='ar'){const w=z/5;x.moveTo(0,-z/2);x.lineTo(z/2,0);x.lineTo(w,0);x.lineTo(w,z/2);x.lineTo(-w,z/2);x.lineTo(-w,0);x.lineTo(-z/2,0)}
+ else if(t=='hx'){for(let i=0;i<6;i++){const a=i*PI/3;i?x.lineTo(Math.cos(a)*z/2,Math.sin(a)*z/2):x.moveTo(Math.cos(a)*z/2,Math.sin(a)*z/2)}}
+ x.fill()}
 function draw(c,s,t){const x=c.getContext('2d'),N=c.width;x.setTransform(1,0,0,1,0,0);x.fillStyle='#050509';x.fillRect(0,0,N,N);x.setTransform(N/256,0,0,N/256,N/2,N/2);
- aura(x,s,t);x.rotate(s.rot*PI/180);x.fillStyle=s.col;
- const z0=s.sz||1;x.save();x.scale(z0,z0);
- HR.forEach((r,j)=>{for(let i=0;i<16;i++)if(r[i]=='X')x.fillRect(i*10-80,j*10-80,10,10)});
- x.restore();
- s.sh.forEach(h=>{x.save();x.translate(h.x,h.y);x.rotate(h.r*PI/180);x.fillStyle=h.c;const z=h.s;
-  if(h.t=='sq')x.fillRect(-z/2,-z/2,z,z);else if(h.t=='ln')x.fillRect(-z,-2,z*2,4);
-  else if(h.t=='ci'){x.beginPath();x.arc(0,0,z/2,0,7);x.fill()}
-  else{x.beginPath();x.moveTo(0,-z/2);x.lineTo(z/2,z/2);x.lineTo(-z/2,z/2);x.fill()}x.restore()})}
+ aura(x,s,t);x.rotate(s.rot*PI/180);
+ const z0=s.sz||1;x.save();x.scale(z0,z0);x.fillStyle=s.col;x.fill(HP);x.restore();
+ if(s.px)pxPaths(s).forEach((p,c)=>{x.fillStyle=c;x.fill(p)});
+ s.sh.forEach(h=>{x.save();x.translate(h.x,h.y);x.rotate(h.r*PI/180);x.scale(h.f?-1:1,h.v?-1:1);shape(x,h);x.restore()})}
 const tick=ms=>{document.querySelectorAll('canvas.sc').forEach(c=>c.s&&draw(c,c.s,ms/1000));requestAnimationFrame(tick)};requestAnimationFrame(tick);
 
-function lib(){ed=null;
- A.innerHTML=`<div class="hd"><h1>Soul Library</h1><p>Tap + to forge a new soul.</p></div><div class="g">${L.map(s=>`<div class="cd" data-o="${s.id}"><canvas class="sc" width="128" height="128"></canvas><div>${esc(s.name)}</div><button class="b${arm==s.id?' on':''}" data-d="${s.id}">${arm==s.id?'Sure?':'Delete'}</button></div>`).join('')}<div class="cd pl" data-o="new">+</div></div>`;
+function lib(){ed=null;A.className='';
+ A.innerHTML=`<div class="hd"><h1>Soul Library</h1><p>Tap + to forge a new soul.</p></div><div class="g">${L.map(s=>`<div class="cd" data-o="${s.id}"><canvas class="sc" width="192" height="192"></canvas><div>${esc(s.name)}</div><button class="b${arm==s.id?' on':''}" data-d="${s.id}">${arm==s.id?'Sure?':'Delete'}</button></div>`).join('')}<div class="cd pl" data-o="new">+</div></div>`;
  A.querySelectorAll('.cd[data-o]').forEach((e,i)=>{const c=e.querySelector('canvas');if(c)c.s=L[i]})}
 
-function chips(){g('chips').innerHTML=ed.sh.map((h,i)=>`<button class="b${i==sel?' on':''}" data-s="${i}">${{sq:'■',ln:'▬',ci:'●',tr:'▲'}[h.t]}${i+1}</button>`).join('');
- const h=ed.sh[sel];g('sp').hidden=!h;if(h){g('hc').value=h.c;g('hs').value=h.s;g('hr').value=h.r;g('hso').value=h.s}}
+function chips(){g('chips').innerHTML=ed.sh.map((h,i)=>`<button class="b ch${i==sel?' on':''}" data-s="${i}">${h.t=='sp'?`<img src="${thumb(h.k)}" alt="">`:I[h.t]}<i>${i+1}</i></button>`).join('');
+ const h=ed.sh[sel];g('sp').hidden=!h;
+ if(h){g('hcr').hidden=h.t=='sp'&&h.k[0]=='w';g('hc').value=h.c;g('hs').value=h.s;g('hso').textContent=h.s;g('hr').value=h.r;g('fh').classList.toggle('on',!!h.f);g('fv').classList.toggle('on',!!h.v)}}
+function syncTools(){A.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t==tool));const c=g('ec');if(c)c.style.cursor=tool=='move'?'':'crosshair';if(tool!='move'&&g('dd'))g('dd').open=true}
+const snap=()=>{hist.push(JSON.stringify(ed.px));if(hist.length>20)hist.shift()};
+function line(a,b,c,d,f){const dx=Math.abs(c-a),dy=-Math.abs(d-b),sx=a<c?1:-1,sy=b<d?1:-1;let e=dx+dy;for(;;){f(a,b);if(a==c&&b==d)break;const e2=2*e;if(e2>=dy){e+=dy;a+=sx}if(e2<=dx){e+=dx;b+=sy}}}
+function stamp(cx,cy){const k=dz,s0=Math.floor(k/2);for(let i=0;i<k;i++)for(let j=0;j<k;j++){const X=cx-s0+i,Y=cy-s0+j;if(X<GMIN||X>GMAX||Y<GMIN||Y>GMAX)continue;const key=X+','+Y;if(tool=='erase')delete ed.px[key];else ed.px[key]=dcol}ed.pv++}
+function vis(X,Y){const c=ed.px[X+','+Y];if(c)return c;const z=ed.sz||1,u=(X+.5)*CS/z+80,v=(Y+.5)*CS/z+80,i=Math.floor(u/10),j=Math.floor(v/10);return i>=0&&i<16&&j>=0&&j<16&&HR[j][i]=='X'?'H':''}
+function flood(X,Y){const t=vis(X,Y);if(t==dcol)return;const seen=new Set(),st=[[X,Y]];
+ while(st.length){const[a,b]=st.pop();if(a<GMIN||a>GMAX||b<GMIN||b>GMAX)continue;const id=(a-GMIN)*52+(b-GMIN);if(seen.has(id))continue;seen.add(id);if(vis(a,b)!==t)continue;ed.px[a+','+b]=dcol;st.push([a+1,b],[a-1,b],[a,b+1],[a,b-1])}ed.pv++}
+function addShape(t,k){const sp=t=='sp',w=sp&&k[0]=='w';ed.sh.push({t,k,x:0,y:0,s:sp?(w?80:40):30,r:0,c:sp&&!w?'#ffffff':'#ff0000',f:0,v:0});sel=ed.sh.length-1;tool='move';syncTools();chips()}
 
-function edit(id){const o=L.find(s=>s.id==id);ed=o?JSON.parse(JSON.stringify(o)):{id:0,name:'',col:'#ffffff',rot:0,sz:1,au:'none',ac:'#00ffff',sh:[]};if(!ed.sz)ed.sz=1;sel=-1;
- A.innerHTML=`<div class="hd"><h1>${o?'Edit':'New'} Soul</h1></div>
- <div class="stage"><canvas id="ec" class="sc" width="256" height="256"></canvas><p class="hint">Drag a shape to move it</p></div>
- <input id="nm" type="text" maxlength="16" placeholder="Name your soul" value="${esc(ed.name)}">
- <div class="pn">
-  <div class="r"><span>Color</span><input type="color" id="col"></div>
-  <div class="r"><span>Size</span><input type="range" id="sz" min="40" max="300"><output id="szo"></output></div>
-  <div class="r"><span>Rotate</span><input type="range" id="rot" min="0" max="359"><button class="b" id="r9">↻90</button></div>
- </div>
- <details><summary class="b">Shapes</summary>
-  <div class="pn">
-   <div class="r"><button class="b" data-a="sq">■</button><button class="b" data-a="ln">▬</button><button class="b" data-a="ci">●</button><button class="b" data-a="tr">▲</button></div>
+function edit(id){const o=L.find(s=>s.id==id);ed=o?JSON.parse(JSON.stringify(o)):{id:0,name:'',col:'#ffffff',rot:0,sz:1,au:'none',ac:'#00ffff',sh:[],px:{},pv:0};
+ if(!ed.sz)ed.sz=1;if(!ed.px)ed.px={};ed.pv=(ed.pv|0)+1;sel=-1;tool='move';hist=[];moreOn=false;
+ A.className='ed'+(dopen?' open':'');
+ A.innerHTML=`<div class="mn"><div class="mi">
+  <div class="hd"><h1>${o?'Edit':'New'} Soul</h1></div>
+  <input id="nm" type="text" maxlength="16" placeholder="Name your soul" value="${esc(ed.name)}">
+  <div class="stage"><canvas id="ec" class="sc" width="512" height="512"></canvas></div>
+  <div class="bar"><button class="b" id="cn">Back</button><button class="b pri" id="sv">Save</button></div>
+ </div></div>
+ <button class="b tgb" id="tgb" aria-label="Toggle editor" aria-expanded="${dopen}"><span>+</span></button>
+ <aside class="dr" id="dr"><div class="tools">
+   <button class="b" data-t="move">${I.move}Move</button><button class="b" data-t="draw">${I.draw}Draw</button>
+   <button class="b" data-t="fill">${I.fill}Bucket</button><button class="b" data-t="erase">${I.erase}Erase</button></div>
+  <details open><summary class="b">Soul</summary><div class="pn">
+   <div class="f"><span>Color</span><input type="color" id="col"></div>
+   <div class="f"><span>Size</span><div class="rg"><input type="range" id="sz" min="40" max="300"><output id="szo"></output></div></div>
+   <div class="f"><span>Rotate</span><div class="rg"><input type="range" id="rot" min="0" max="359"><button class="b" id="r9">↻90</button></div></div>
+  </div></details>
+  <details id="dd"><summary class="b">Draw</summary><div class="pn">
+   <div class="f"><span>Color</span><input type="color" id="dc"></div>
+   <div class="f"><span>Block size</span><div class="rg"><input type="range" id="dz" min="1" max="12"><output id="dzo"></output></div></div>
+   <div class="two"><button class="b" id="un">Undo</button><button class="b dng" id="clr">Clear</button></div>
+  </div></details>
+  <details open id="sd"><summary class="b">Shapes</summary><div class="pn">
+   <div class="shg">${BASIC.map(t=>`<button class="b" data-a="${t}" aria-label="Add ${t}">${I[t]}</button>`).join('')}</div>
+   <button class="b wide" id="more">More</button>
+   <div id="mp" hidden>
+    <div class="lb">Wings</div><div class="thg w">${WINGS.map((_,i)=>`<button class="b th" data-k="w${i}" aria-label="Add wing ${i+1}"><img src="${thumb('w'+i)}" alt=""></button>`).join('')}</div>
+    <div class="lb">Icons</div><div class="thg k">${ICONS.map((_,i)=>`<button class="b th" data-k="i${i}" aria-label="Add icon ${i+1}"><img src="${thumb('i'+i)}" alt=""></button>`).join('')}</div>
+   </div>
    <div id="chips"></div>
-   <div id="sp"><div class="r"><span>Color</span><input type="color" id="hc"></div><div class="r"><span>Size</span><input type="range" id="hs" min="6" max="${MAXS}"><output id="hso"></output></div><div class="r"><span>Turn</span><input type="range" id="hr" min="0" max="359"></div><button class="b dng" id="hd">Delete shape</button></div>
-  </div>
- </details>
- <details><summary class="b">Aura</summary><div class="pn"><div class="r"><span>Style</span><select id="au"><option value="none">None<option value="glow">Glow<option value="spark">Sparkles<option value="orbit">Orbit<option value="ember">Embers</select></div><div class="r"><span>Color</span><input type="color" id="ac"></div></div></details>
- <div class="bar"><button class="b" id="cn">Back</button><button class="b pri" id="sv">Save</button></div>`;
+   <div id="sp">
+    <div class="f" id="hcr"><span>Color</span><input type="color" id="hc"></div>
+    <div class="f"><span>Size</span><div class="rg"><input type="range" id="hs" min="6" max="240"><output id="hso"></output></div></div>
+    <div class="f"><span>Turn</span><div class="rg"><input type="range" id="hr" min="0" max="359"></div></div>
+    <div class="two f"><button class="b" id="fh">Flip ↔</button><button class="b" id="fv">Flip ↕</button></div>
+    <button class="b dng wide" id="hd">Delete shape</button>
+   </div>
+  </div></details>
+  <details><summary class="b">Aura</summary><div class="pn">
+   <div class="f"><span>Style</span><select id="au"><option value="none">None<option value="glow">Glow<option value="spark">Sparkles<option value="orbit">Orbit<option value="ember">Embers</select></div>
+   <div class="f"><span>Color</span><input type="color" id="ac"></div>
+  </div></details>
+ </aside>`;
  const c=g('ec'),cur=()=>ed.sh[sel];c.s=ed;
- g('col').value=ed.col;g('rot').value=ed.rot;g('au').value=ed.au;g('ac').value=ed.ac;
+ g('col').value=ed.col;g('rot').value=ed.rot;g('au').value=ed.au;g('ac').value=ed.ac;g('dc').value=dcol;g('dz').value=dz;g('dzo').textContent=dz;
  g('sz').value=Math.round(ed.sz*100);g('szo').textContent=Math.round(ed.sz*100)+'%';
+ g('tgb').onclick=()=>{dopen=!dopen;A.classList.toggle('open',dopen);g('tgb').setAttribute('aria-expanded',dopen)};
+ g('more').onclick=()=>{moreOn=!moreOn;g('mp').hidden=!moreOn;g('more').classList.toggle('on',moreOn)};
  g('nm').oninput=e=>ed.name=e.target.value;g('col').oninput=e=>ed.col=e.target.value;g('rot').oninput=e=>ed.rot=+e.target.value;
  g('sz').oninput=e=>{ed.sz=+e.target.value/100;g('szo').textContent=e.target.value+'%'};
  g('r9').onclick=()=>{ed.rot=(ed.rot+90)%360;g('rot').value=ed.rot};
+ g('dc').oninput=e=>dcol=e.target.value;g('dz').oninput=e=>{dz=+e.target.value;g('dzo').textContent=dz};
+ g('un').onclick=()=>{if(hist.length){ed.px=JSON.parse(hist.pop());ed.pv++}};
+ g('clr').onclick=()=>{snap();ed.px={};ed.pv++};
  g('au').onchange=e=>ed.au=e.target.value;g('ac').oninput=e=>ed.ac=e.target.value;
  g('hc').oninput=e=>cur().c=e.target.value;g('hs').oninput=e=>{cur().s=+e.target.value;g('hso').textContent=e.target.value};g('hr').oninput=e=>cur().r=+e.target.value;
+ g('fh').onclick=()=>{const h=cur();h.f=h.f?0:1;g('fh').classList.toggle('on',!!h.f)};
+ g('fv').onclick=()=>{const h=cur();h.v=h.v?0:1;g('fv').classList.toggle('on',!!h.v)};
  g('hd').onclick=()=>{ed.sh.splice(sel,1);sel=-1;chips()};
  const loc=e=>{const r=c.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*256-128,py=(e.clientY-r.top)/r.height*256-128,a=-ed.rot*PI/180;return[px*Math.cos(a)-py*Math.sin(a),px*Math.sin(a)+py*Math.cos(a)]};
- c.onpointerdown=e=>{const[x,y]=loc(e);let b=-1,bd=1e9;ed.sh.forEach((h,i)=>{const d=Math.hypot(h.x-x,h.y-y);if(d<(h.t=='ln'?h.s:h.s/2)+14&&d<=bd){b=i;bd=d}});if(b>=0){sel=b;chips();drag=[b,ed.sh[b].x-x,ed.sh[b].y-y];c.setPointerCapture(e.pointerId)}};
- c.onpointermove=e=>{if(!drag)return;const[x,y]=loc(e),h=ed.sh[drag[0]];h.x=cl(x+drag[1],-128,128);h.y=cl(y+drag[2],-128,128)};
- c.onpointerup=c.onpointercancel=()=>drag=null;
+ const cell=(x,y)=>[cl(Math.floor(x/CS),GMIN,GMAX),cl(Math.floor(y/CS),GMIN,GMAX)];
+ c.onpointerdown=e=>{const[x,y]=loc(e);
+  if(tool=='move'){let b=-1,bd=1e9;ed.sh.forEach((h,i)=>{const d=Math.hypot(h.x-x,h.y-y);if(d<(h.t=='ln'?h.s:h.s/2)+14&&d<=bd){b=i;bd=d}});if(b>=0){sel=b;chips();drag=[b,ed.sh[b].x-x,ed.sh[b].y-y];c.setPointerCapture(e.pointerId)}return}
+  const[cx,cy]=cell(x,y);snap();
+  if(tool=='fill'){flood(cx,cy);return}
+  paint=[cx,cy];stamp(cx,cy);c.setPointerCapture(e.pointerId)};
+ c.onpointermove=e=>{if(!paint&&!drag)return;const[x,y]=loc(e);
+  if(paint){const[cx,cy]=cell(x,y);line(paint[0],paint[1],cx,cy,stamp);paint=[cx,cy];return}
+  const h=ed.sh[drag[0]];h.x=cl(x+drag[1],-128,128);h.y=cl(y+drag[2],-128,128)};
+ c.onpointerup=c.onpointercancel=()=>{drag=null;paint=null};
  g('sv').onclick=()=>{if(!ed.name.trim())ed.name='Soul '+(L.length+1);if(ed.id)L=L.map(s=>s.id==ed.id?ed:s);else{ed.id=Date.now();L.push(ed)}put();lib()};
- g('cn').onclick=lib;chips()}
+ g('cn').onclick=lib;chips();syncTools()}
 
 A.onclick=e=>{const T=e.target;
  const d=T.closest('[data-d]');if(d){const id=+d.dataset.d;if(arm==id){L=L.filter(s=>s.id!=id);arm=0;put()}else{arm=id;setTimeout(()=>{if(arm==id){arm=0;if(!ed)lib()}},2500)}lib();return}
- const a=T.closest('[data-a]');if(a&&ed){ed.sh.push({t:a.dataset.a,x:0,y:0,s:30,r:0,c:'#ff0000'});sel=ed.sh.length-1;chips();return}
- const s=T.closest('[data-s]');if(s&&ed){sel=+s.dataset.s;chips();return}
+ const k=T.closest('[data-k]');if(k&&ed){addShape('sp',k.dataset.k);return}
+ const a=T.closest('[data-a]');if(a&&ed){addShape(a.dataset.a);return}
+ const tl=T.closest('[data-t]');if(tl&&ed){tool=tl.dataset.t;syncTools();return}
+ const s=T.closest('[data-s]');if(s&&ed){sel=+s.dataset.s;tool='move';syncTools();chips();return}
  const o=T.closest('[data-o]');if(o&&!ed)edit(o.dataset.o=='new'?null:+o.dataset.o)};
 lib();
 </script></body></html>
